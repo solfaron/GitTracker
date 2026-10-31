@@ -1,4 +1,5 @@
-﻿using System.Net;
+﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 
 class Program
 {
@@ -14,12 +15,25 @@ class Program
             var response = await Client.GetAsync($"https://api.github.com/users/{nickname}/events"); 
             response.EnsureSuccessStatusCode();
             var output = await response.Content.ReadAsStringAsync();
-            Console.WriteLine(output);
+            ParseArgs(output);
         }
         catch (HttpRequestException e)
         {
             Console.WriteLine(e.Message);
             
+        }
+    }
+
+    static void ParseArgs(string output)
+    {
+        using (JsonDocument json = JsonDocument.Parse(output))
+        {
+            var elements = json.RootElement.EnumerateArray();
+            foreach (var element in elements)
+            {
+                Console.WriteLine(element.GetProperty("type").GetString());
+                Console.WriteLine(element.GetProperty("repo").GetProperty("name").GetString());
+            }
         }
     }
 }
