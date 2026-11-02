@@ -29,10 +29,25 @@ class Program
         using (JsonDocument json = JsonDocument.Parse(output))
         {
             var elements = json.RootElement.EnumerateArray();
+            Console.WriteLine("output:\n");
             foreach (var element in elements)
             {
-                Console.WriteLine(element.GetProperty("type").GetString());
-                Console.WriteLine(element.GetProperty("repo").GetProperty("name").GetString());
+                string type = element.GetProperty("type").GetString();
+                string repo = element.GetProperty("repo").GetProperty("name").GetString();
+                string time = element.GetProperty("created_at").GetString();
+                var payload = element.GetProperty("payload");
+                switch (type)
+                {
+                    case "PushEvent":
+                        string branch = payload.GetProperty("ref").GetString().Replace("refs/heads/", "");
+                        Console.WriteLine($"{time}:  Pushed in {branch} in {repo}");
+                        break;
+                    
+                    case "WatchEvent":
+                        
+                }
+
+                
             }
         }
     }
