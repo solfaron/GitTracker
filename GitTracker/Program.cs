@@ -30,20 +30,40 @@ class Program
         {
             var elements = json.RootElement.EnumerateArray();
             Console.WriteLine("output:\n");
+            
+            int pushCounter = 1;
+            string currentRepo = "";
+            string currentBranch = "";
+
             foreach (var element in elements)
             {
                 string type = element.GetProperty("type").GetString();
                 string repo = element.GetProperty("repo").GetProperty("name").GetString();
                 string time = element.GetProperty("created_at").GetString();
                 var payload = element.GetProperty("payload");
+                string branch = payload.GetProperty("ref").GetString().Replace("refs/heads/", "");
+
+                
+                
                 switch (type)
                 {
                     case "PushEvent":
-                        string branch = payload.GetProperty("ref").GetString().Replace("refs/heads/", "");
-                        Console.WriteLine($"{time}:  Pushed in {branch} in {repo}");
+                        if (repo == currentRepo && branch == currentBranch)
+                        {
+                            pushCounter++;
+                        }
+                        
+                        else
+                        {
+                            Console.WriteLine($"  -Made {pushCounter} push(-es) in repo {repo} -> {branch} branch");
+                            currentRepo = repo;
+                            currentBranch = branch;
+                            pushCounter = 1;
+                        }
                         break;
                     
                     case "WatchEvent":
+                        break;
                         
                 }
 
