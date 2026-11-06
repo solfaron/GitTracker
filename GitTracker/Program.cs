@@ -37,25 +37,28 @@ class Program
 
             foreach (var element in elements)
             {
-                string type = element.GetProperty("type").GetString();
-                string repo = element.GetProperty("repo").GetProperty("name").GetString();
-                string time = element.GetProperty("created_at").GetString();
+                string? type = element.GetProperty("type").GetString();
+                string? repo = element.GetProperty("repo").GetProperty("name").GetString();
+                string? time = element.GetProperty("created_at").GetString();
                 var payload = element.GetProperty("payload");
-                string branch = payload.GetProperty("ref").GetString().Replace("refs/heads/", "");
 
                 
                 
                 switch (type)
                 {
                     case "PushEvent":
+                        string branch = payload.GetProperty("ref").GetString()!.Replace("refs/heads/", "");
+                        
                         if (repo == currentRepo && branch == currentBranch)
                         {
                             pushCounter++;
                         }
-                        
                         else
                         {
-                            Console.WriteLine($"  -Made {pushCounter} push(-es) in repo {repo} -> {branch} branch");
+                            if (currentRepo != "")
+                            {
+                                Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {repo} -> {branch} branch at {time}");
+                            }
                             currentRepo = repo;
                             currentBranch = branch;
                             pushCounter = 1;
@@ -63,9 +66,24 @@ class Program
                         break;
                     
                     case "WatchEvent":
+                        Console.WriteLine($"    -Starred the {repo} at {time}");
                         break;
-                        
+                    
+                    case "ForkEvent":
+                        var source = payload.GetProperty("full_name").GetString();
+                        Console.WriteLine($"    -Forked the {source}");
+                        break;
+                    case "IssueCommentEvent":
+                        var issue = payload.GetProperty("issue").GetString();
+                        var comment = payload.GetProperty("comment").GetString();
+                        Console.WriteLine($"    -Issued {repo}: {issue} -> {comment}");
+                        break;
                 }
+                if (currentRepo != "")
+                {
+                    Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {repo} -> {branch} branch at {time}");
+                }
+                
 
                 
             }
