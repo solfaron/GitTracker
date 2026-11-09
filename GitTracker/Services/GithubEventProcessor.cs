@@ -31,7 +31,7 @@ public class GithubEventProcessor
                     {
                         if (currentRepo != "")
                         {
-                            Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {currentRepo} -> {currentBranch} branch");
+                            Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {currentRepo} -> {currentBranch}");
                         }
                         currentRepo = repo;
                         currentBranch = branch;
@@ -40,7 +40,7 @@ public class GithubEventProcessor
                     break;
                 
                 case "WatchEvent":
-                    Console.WriteLine($"    -Starred {repo} at {time}");
+                    Console.WriteLine($"    -Starred {repo}");
                     break;
                 
                 case "ForkEvent":

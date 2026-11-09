@@ -20,7 +20,6 @@ class Program
         catch (HttpRequestException e)
         {
             Console.WriteLine(e.Message);
-            
         }
     }
 }
