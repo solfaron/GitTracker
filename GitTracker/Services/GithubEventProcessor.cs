@@ -9,9 +9,7 @@ public class GithubEventProcessor
         var events = JsonSerializer.Deserialize<List<GithubEvent>>(output);
         Console.WriteLine("output:\n");
         
-        int pushCounter = 1;
-        string currentRepo = "";
-        string currentBranch = "";
+        TrackerContext context =  new TrackerContext();
         
         foreach (var e in events)
         {
