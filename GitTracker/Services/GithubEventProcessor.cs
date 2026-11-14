@@ -4,6 +4,22 @@ namespace GitTracker;
 
 public class GithubEventProcessor
 {
+    private readonly Dictionary<string, IEventStrategy> events;
+    public GithubEventProcessor()
+    {
+        var types = System.Reflection.Assembly.GetExecutingAssembly()
+            .GetTypes()
+            .Where(type => typeof(IEventStrategy).IsAssignableFrom(type) && !type.IsInterface);
+        var insertEvents = new Dictionary<string, IEventStrategy>();
+        foreach (var type in types)
+        {
+            var strategy = (IEventStrategy)Activator.CreateInstance(type);
+            insertEvents.Add(strategy.TargetEventType, strategy);
+        }
+
+        events = insertEvents;
+    }
+    
     public void ProcessAndDisplay(string output)
     {
         var events = JsonSerializer.Deserialize<List<GithubEvent>>(output);
@@ -20,21 +36,7 @@ public class GithubEventProcessor
             switch (type)
             {
                 case "PushEvent":
-                    string branch = e.Payload.Ref?.Replace("refs/heads/", "") ?? "";
-                    if (repo == currentRepo && branch == currentBranch)
-                    {
-                        pushCounter++;
-                    }
-                    else 
-                    {
-                        if (currentRepo != "")
-                        {
-                            Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {currentRepo} -> {currentBranch}");
-                        }
-                        currentRepo = repo;
-                        currentBranch = branch;
-                        pushCounter = 1;
-                    }
+                   
                     break;
                 
                 case "WatchEvent":
@@ -83,9 +85,9 @@ public class GithubEventProcessor
                     break;
             }
         }
-        if (currentRepo != "")
-        {
-            Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {currentRepo} -> {currentBranch} branch");
-        } 
+        //if (currentRepo != "")
+        //{
+          //  Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {currentRepo} -> {currentBranch} branch");
+        //} 
     }
 }
