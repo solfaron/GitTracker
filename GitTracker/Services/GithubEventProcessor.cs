@@ -4,7 +4,7 @@ namespace GitTracker;
 
 public class GithubEventProcessor
 {
-    private readonly Dictionary<string, IEventStrategy> events;
+    private readonly Dictionary<string, IEventStrategy> _strategies;
     public GithubEventProcessor()
     {
         var types = System.Reflection.Assembly.GetExecutingAssembly()
@@ -13,11 +13,13 @@ public class GithubEventProcessor
         var insertEvents = new Dictionary<string, IEventStrategy>();
         foreach (var type in types)
         {
-            var strategy = (IEventStrategy)Activator.CreateInstance(type);
-            insertEvents.Add(strategy.TargetEventType, strategy);
+            if (Activator.CreateInstance(type) is IEventStrategy strategy)
+            {
+                insertEvents.Add(strategy.TargetEventType, strategy);
+            }
         }
 
-        events = insertEvents;
+        _strategies = insertEvents;
     }
     
     public void ProcessAndDisplay(string output)
@@ -29,65 +31,28 @@ public class GithubEventProcessor
         
         foreach (var e in events)
         {
-            string type = e.Type;
-            string repo = e.Repo.Name;
-            string time = e.CreatedAt;
-
-            switch (type)
+            if (e.Type != "PushEvent")
             {
-                case "PushEvent":
-                   
-                    break;
-                
-                case "WatchEvent":
-                    Console.WriteLine($"    -Starred {repo}");
-                    break;
-                
-                case "ForkEvent":
-                    var source = e.Payload.Forkee?.FullName;
-                    Console.WriteLine($"    -Forked {source} repo");
-                    break;
-                
-                case "IssueCommentEvent":
-                    var issue = e.Payload.Issue?.Title;
-                    var comment = e.Payload.Comment?.Body;
-                    Console.WriteLine($"    -Commented Issue: {issue} - {comment}");
-                    break;
-                
-                case "IssuesEvent":
-                    var issueAction = e.Payload.Action;
-                    var title = e.Payload.Issue?.Title;
-                    Console.WriteLine($"    -Issue Action: {issueAction} - {title}");
-                    break;
-                
-                case "CreateEvent":
-                    var reftype = e.Payload.RefType;
-                    var refname = e.Payload.Ref;
-                    Console.WriteLine($"    -Created a new {reftype} - '{refname}'");
-                    break;
-                
-                case "PullRequestEvent":
-                    var prAction =  e.Payload.Action;
-                    var prName = e.Payload.PullRequest?.Title;
-                    Console.WriteLine($"    -Pull Request Action: {prAction} - {prName}");
-                    break;
-                
-                case "DeleteEvent":
-                    var deleteRefType = e.Payload.RefType;
-                    var deleteRefName = e.Payload.Ref;
-                    Console.WriteLine($"    -Deleted:  {deleteRefType} - {deleteRefName}");
-                    break;
-                
-                case "CommitCommentEvent":
-                    var commitComment = e.Payload.Comment?.Body;
-                    var commentAction =  e.Payload.Action;
-                    Console.WriteLine($"    -Commented commit : {commitComment} - {commentAction}");
-                    break;
+                var pendingPushes = context.FlushPushes();
+                if (pendingPushes is not null)
+                {
+                    Console.WriteLine(pendingPushes);
+                }
+            }
+
+            if (_strategies.TryGetValue(e.Type, out var strategy))
+            {
+                string message = strategy.Process(e, context);
+                if (!string.IsNullOrEmpty(message))
+                {
+                    Console.WriteLine(message);
+                }
             }
         }
-        //if (currentRepo != "")
-        //{
-          //  Console.WriteLine($"    -Made {pushCounter} push(-es) in repo {currentRepo} -> {currentBranch} branch");
-        //} 
+        var finalPushes = context.FlushPushes();
+        if (finalPushes is not null)
+        {
+            Console.WriteLine(finalPushes);
+        }
     }
 }

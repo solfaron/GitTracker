@@ -16,10 +16,7 @@ public class PushEventStrategy : IEventStrategy
         }
         else 
         {
-            if (context.CurrentRepo != "")
-            {   
-                result = $"    -Made {context.PushCounter} push(-es) in repo {context.CurrentRepo} -> {context.CurrentBranch}";
-            }
+            result = context.FlushPushes() ?? string.Empty;
             context.CurrentRepo = repo;
             context.CurrentBranch = branch;
             context.PushCounter = 1;
